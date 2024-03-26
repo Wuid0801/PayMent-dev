@@ -1,6 +1,5 @@
 import * as React from "react";
-
-import { Button } from "@/components/ui/button";
+import mockData from "@/data/db";
 import {
   Card,
   CardContent,
@@ -18,8 +17,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+interface FixedAmountCoupon {
+  type: string;
+  amount: number;
+  description: string;
+}
+
+interface PercentageCoupon {
+  type: string;
+  percentage: number;
+  description: string;
+}
+
+type CouponType = FixedAmountCoupon | PercentageCoupon;
 
 export default function CardWithForm() {
+  const [selectedCoupon, setSelectedCoupon] = React.useState<CouponType | null>(
+    null
+  );
+  const [pointUsed, setPointUsed] = React.useState<number>(0);
+
+  const handleCouponSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedCouponText = e.target.value;
+    const selectedCoupon = mockData.coupons.find(
+      (coupon) => coupon.description === selectedCouponText
+    );
+    console.log(selectedCoupon);
+    setSelectedCoupon(selectedCoupon ?? null);
+  };
+
+  const handlePointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const point = parseInt(value); 
+  
+    if (!isNaN(point)) {
+      setPointUsed(point); 
+    } else {
+      setPointUsed(0); 
+    }
+  };
+
+  const calculateDiscount = () => {
+    if (!selectedCoupon) return 0;
+
+    if (selectedCoupon.type === "정액제") {
+      return (selectedCoupon as FixedAmountCoupon).amount ?? 0;
+    } else if (selectedCoupon.type === "정률제") {
+      return (
+        (mockData.productPrice *
+          (selectedCoupon as PercentageCoupon).percentage) /
+        100
+      );
+    }
+    return 0;
+  };
+  const calculateTotalPrice = () => {
+    const discount = calculateDiscount() ?? 0;
+    const totalBeforePointDeduction = mockData.productPrice - discount + mockData.deliveryFee;
+    return totalBeforePointDeduction - pointUsed; 
+  };
+
   return (
     <div className="flex items-start gap-4 justify-center tracking-tighter text-sm">
       <div className="flex flex-col gap-4">
@@ -38,9 +95,9 @@ export default function CardWithForm() {
                     height={100}
                   ></Image>
                   <div>
-                    <Label htmlFor="Soap">Daily Facial Soap</Label>
-                    <p>(필수) 용량 : 80ml - 1개</p>
-                    <p>18000원</p>
+                    <Label htmlFor="iPhone">{mockData.products[0].name}</Label>
+                    <p>(필수) 색상: Space Gray - 1개</p>
+                    <p>{mockData.products[0].price}</p>
                   </div>
                 </div>
               </div>
@@ -57,8 +114,8 @@ export default function CardWithForm() {
                 <div className="flex space-y-1.5 gap-4 justify-between">
                   <div>
                     <Label htmlFor="name">홍길동</Label>
-                    <p>(필수) 용량 : 80ml - 1개</p>
-                    <p>18000원</p>
+                    <p>01012345678</p>
+                    <p>pig123@naver.com</p>
                   </div>
                   <div>
                     <button>수정</button>
@@ -92,19 +149,33 @@ export default function CardWithForm() {
             <CardTitle>쿠폰/포인트</CardTitle>
           </CardHeader>
           <CardContent>
-            <form>
-              <div className="grid w-full items-center gap-4">
-                <div className="flex flex-col space-y-1.5 gap-4">
-                  <Label htmlFor="Coupon">쿠폰</Label>
-                  <Input id="Coupon" placeholder="Coupon" />
-                  <Label htmlFor="CouponNumber">쿠폰 번호</Label>
-                  <Input id="CouponNumber" placeholder="CouponNumber" />
-                  <Label htmlFor="Point">쿠폰 포인트</Label>
-                  <Input id="Point" placeholder="Point" />
-                </div>
-                <div className="flex flex-col space-y-1.5"></div>
+            <div className="grid w-full items-center gap-4">
+              <div className="flex flex-col space-y-1.5 gap-4">
+                <label htmlFor="Coupon">쿠폰</label>
+                <Select onValueChange={(value) => handleCouponSelect({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}>
+                  <SelectTrigger id="framework">
+                    <SelectValue placeholder="쿠폰선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {mockData.coupons.map((coupon, index) => (
+                      <SelectItem key={index} value={coupon.description}>
+                        {coupon.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <label htmlFor="CouponNumber">쿠폰 번호</label>
+                <input
+                  type="text"
+                  id="CouponNumber"
+                  placeholder="Coupon Number"
+                />
+                <label htmlFor="Point">포인트 사용</label>
+                <input type="text" id="Point" placeholder="포인트를 입력하세요" onChange={handlePointChange}/>
               </div>
-            </form>
+              <div className="flex flex-col space-y-1.5"></div>
+            </div>
           </CardContent>
           <CardFooter className="grid place-items-start">
             <p>보유 포인트: 2,300</p>
@@ -128,11 +199,11 @@ export default function CardWithForm() {
                   </div>
                   <div className="flex w-full justify-between">
                     <p>쿠폰 할인</p>
-                    <p>-1,000원</p>
+                    <p>-{calculateDiscount()}원</p>
                   </div>
                   <div className="flex w-full justify-between">
                     <p>포인트 사용</p>
-                    <p>-0원</p>
+                    <p>-{pointUsed}원</p>
                   </div>
                   <div className="flex w-full justify-between">
                     <p>배송비</p>
@@ -143,7 +214,7 @@ export default function CardWithForm() {
               <div className="ma-auto my-4 flex w-full items-center justify-evenly bg-stone-400 flex-grow h-px opacity-30"></div>
               <div className="flex w-full justify-between">
                 <p>총 결제금액</p>
-                <p>19,500원</p>
+                <p>{calculateTotalPrice()}원</p>
               </div>
             </form>
           </CardContent>
