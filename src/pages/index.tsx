@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 interface FixedAmountCoupon {
   type: string;
   amount: number;
@@ -36,6 +37,11 @@ export default function CardWithForm() {
     null
   );
   const [pointUsed, setPointUsed] = React.useState<number>(0);
+  const [points] = React.useState(mockData.points);
+  const [useAllPoints, setUseAllPoints] = React.useState(false);
+
+  const [key, setKey] = React.useState(+new Date());
+  const [value, setValue] = React.useState<string | undefined>(undefined);
 
   const handleCouponSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedCouponText = e.target.value;
@@ -46,18 +52,50 @@ export default function CardWithForm() {
     setSelectedCoupon(selectedCoupon ?? null);
   };
 
+  // input handle
   const handlePointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const point = parseInt(value);
-
-    if (!isNaN(point)) {
-      setPointUsed(point);
+    const enteredPoint = parseInt(e.target.value);
+    
+    if (!isNaN(enteredPoint)) {
+      const totalPrice = calculateTotalPrice();
+      if (enteredPoint <= totalPrice) {
+        if (enteredPoint <= points) {
+          setPointUsed(enteredPoint);
+        } else {
+          alert("보유 포인트보다 많이 입력하셨습니다!");
+          setPointUsed(0);
+        }
+      } else {
+        alert("최종 결제 금액을 초과하여 입력하셨습니다!");
+        setPointUsed(totalPrice);
+      }
     } else {
       setPointUsed(0);
     }
   };
-  // 버튼을 만들지 않고 onChange로 쿠폰이 바뀌면 바뀌는 것에 맞춰서 할인금액과 최종 금액이 바로 바뀌게 하고 싶었습니다.
-  const calculateDiscount = (totalBeforePointDeduction : number) => {
+
+  // 전액 사용 버튼 handle
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUseAllPoints(e.target.checked);
+    if (e.target.checked) {
+      const totalPrice = calculateTotalPrice();
+      if (points > 0) {
+        if (points >= totalPrice) {
+          setPointUsed(totalPrice);
+        } else {
+          alert("최종 결제 금액을 초과하여 입력하셨습니다!");
+          setPointUsed(totalPrice);
+        }
+      } else {
+        alert("보유 포인트가 없습니다!");
+        setUseAllPoints(false);
+      }
+    } else {
+      setPointUsed(0);
+    }
+  };
+
+  const calculateDiscount = (totalBeforePointDeduction: number) => {
     if (!selectedCoupon) return 0;
 
     if (selectedCoupon.type === "정액제") {
@@ -71,10 +109,20 @@ export default function CardWithForm() {
     }
     return 0;
   };
+
+  // 할인 먼저 적용
+  // const calculateTotalPrice = () => {
+  //   const totalBeforePointDeduction = mockData.productPrice - pointUsed;
+  //   const discount = calculateDiscount(totalBeforePointDeduction) ?? 0;
+  //   return totalBeforePointDeduction - discount + mockData.deliveryFee;
+  // };
+
+  // 포인트 먼저 적용
   const calculateTotalPrice = () => {
-    const totalBeforePointDeduction = mockData.productPrice - pointUsed;
-    const discount = calculateDiscount(totalBeforePointDeduction) ?? 0;
-    return totalBeforePointDeduction - discount + mockData.deliveryFee;
+    const discount = calculateDiscount(mockData.productPrice) ?? 0;
+    const totalBeforePointDeduction = mockData.productPrice - discount;
+    const totalPriceAfterPointDeduction = totalBeforePointDeduction - pointUsed;
+    return totalPriceAfterPointDeduction + mockData.deliveryFee;
   };
 
   return (
@@ -150,46 +198,76 @@ export default function CardWithForm() {
           </CardHeader>
           <CardContent>
             <div className="grid w-full items-center gap-4">
-              <div className="flex flex-col space-y-1.5 gap-4">
-                <label htmlFor="Coupon">쿠폰</label>
-                <Select
-                  onValueChange={(value) =>
-                    handleCouponSelect({
-                      target: { value },
-                    } as React.ChangeEvent<HTMLSelectElement>)
-                  }
-                >
-                  <SelectTrigger id="framework">
-                    <SelectValue placeholder="쿠폰선택" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockData.coupons.map((coupon, index) => (
-                      <SelectItem key={index} value={coupon.description}>
-                        {coupon.description}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="Point">포인트 사용</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="Point"
+                      placeholder="포인트를 입력하세요"
+                      value={pointUsed}
+                      onChange={handlePointChange}
+                      className="pr-8 text-right"
+                    />
+                    <span className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400">
+                      원
+                    </span>
+                  </div>
 
-                <label htmlFor="CouponNumber">쿠폰 번호</label>
-                <input
-                  type="text"
-                  id="CouponNumber"
-                  placeholder="Coupon Number"
-                />
-                <label htmlFor="Point">포인트 사용</label>
-                <input
-                  type="text"
-                  id="Point"
-                  placeholder="포인트를 입력하세요"
-                  onChange={handlePointChange}
-                />
+                  <div className="flex space-x-2">
+                    <input
+                      type="checkbox"
+                      id="useAllPoints"
+                      checked={useAllPoints}
+                      onChange={handleCheckboxChange}
+                      name="option"
+                    />
+                    <span>전액 사용</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 ">
+                  <label htmlFor="Coupon" className="flex-shrink-0">
+                    쿠폰
+                  </label>
+                  <Select
+                    key={key}
+                    value={value}
+                    onValueChange={(value) =>
+                      handleCouponSelect({
+                        target: { value },
+                      } as React.ChangeEvent<HTMLSelectElement>)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="쿠폰선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockData.coupons.map((coupon, index) => (
+                        <SelectItem key={index} value={coupon.description}>
+                          {coupon.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setValue(undefined);
+                      setSelectedCoupon(null);
+                      setKey(+new Date());
+                    }}
+                  >
+                    취소
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-col space-y-1.5"></div>
             </div>
           </CardContent>
           <CardFooter className="grid place-items-start">
-            <p>보유 포인트: 2,300</p>
+            <p>보유 포인트 : {mockData.points}</p>
             <p>5,000 포인트 이상 보유 및 10,000원 이상 구매시 사용 가능</p>
           </CardFooter>
         </Card>
@@ -206,15 +284,21 @@ export default function CardWithForm() {
                 <div className="flex flex-col space-y-1">
                   <div className="flex w-full justify-between">
                     <p>상품 가격</p>
-                    <p>18,000원</p>
+                    <p>1,000,000원</p>
                   </div>
                   <div className="flex w-full justify-between">
                     <p>쿠폰 할인</p>
-                    <p>-{calculateDiscount(mockData.productPrice - pointUsed)}원</p>
+                    <p>
+                      -
+                      {calculateDiscount(
+                        mockData.productPrice - pointUsed
+                      ).toLocaleString()}
+                      원
+                    </p>
                   </div>
                   <div className="flex w-full justify-between">
                     <p>포인트 사용</p>
-                    <p>-{pointUsed}원</p>
+                    <p>-{pointUsed.toLocaleString()}원</p>
                   </div>
                   <div className="flex w-full justify-between">
                     <p>배송비</p>
@@ -225,13 +309,13 @@ export default function CardWithForm() {
               <div className="ma-auto my-4 flex w-full items-center justify-evenly bg-stone-400 flex-grow h-px opacity-30"></div>
               <div className="flex w-full justify-between">
                 <p>총 결제금액</p>
-                <p>{calculateTotalPrice()}원</p>
+                <p>{calculateTotalPrice().toLocaleString()}원</p>
               </div>
             </form>
           </CardContent>
           <CardFooter className="bg-gray-50 p-4 pl-6">
             <div>
-              <p>700 포인트 적립예정</p>
+              <p>{(calculateTotalPrice() / 100).toFixed(0)} 포인트 적립 예정</p>
             </div>
           </CardFooter>
         </Card>
