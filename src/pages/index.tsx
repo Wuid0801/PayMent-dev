@@ -56,18 +56,23 @@ export default function CardWithForm() {
   const handlePointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const enteredPoint = parseInt(e.target.value);
     
-    if (!isNaN(enteredPoint)) {
+    if (!Number.isNaN(enteredPoint)) {
       const totalPrice = calculateTotalPrice();
-      if (enteredPoint <= totalPrice) {
-        if (enteredPoint <= points) {
-          setPointUsed(enteredPoint);
+      if (enteredPoint >= 0) {
+        if (enteredPoint <= totalPrice) {
+          if (enteredPoint <= points) {
+            setPointUsed(enteredPoint);
+          } else {
+            alert("보유 포인트보다 많이 입력하셨습니다!");
+            setPointUsed(0);
+          }
         } else {
-          alert("보유 포인트보다 많이 입력하셨습니다!");
-          setPointUsed(0);
+          alert("최종 결제 금액을 초과하여 입력하셨습니다!");
+          setPointUsed(totalPrice);
         }
       } else {
-        alert("최종 결제 금액을 초과하여 입력하셨습니다!");
-        setPointUsed(totalPrice);
+        alert("음수 포인트는 입력할 수 없습니다!");
+        setPointUsed(0);
       }
     } else {
       setPointUsed(0);
