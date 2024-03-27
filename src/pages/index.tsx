@@ -48,23 +48,23 @@ export default function CardWithForm() {
 
   const handlePointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    const point = parseInt(value); 
-  
+    const point = parseInt(value);
+
     if (!isNaN(point)) {
-      setPointUsed(point); 
+      setPointUsed(point);
     } else {
-      setPointUsed(0); 
+      setPointUsed(0);
     }
   };
-
-  const calculateDiscount = () => {
+  // 버튼을 만들지 않고 onChange로 쿠폰이 바뀌면 바뀌는 것에 맞춰서 할인금액과 최종 금액이 바로 바뀌게 하고 싶었습니다.
+  const calculateDiscount = (totalBeforePointDeduction : number) => {
     if (!selectedCoupon) return 0;
 
     if (selectedCoupon.type === "정액제") {
       return (selectedCoupon as FixedAmountCoupon).amount ?? 0;
     } else if (selectedCoupon.type === "정률제") {
       return (
-        (mockData.productPrice *
+        (totalBeforePointDeduction *
           (selectedCoupon as PercentageCoupon).percentage) /
         100
       );
@@ -72,13 +72,13 @@ export default function CardWithForm() {
     return 0;
   };
   const calculateTotalPrice = () => {
-    const discount = calculateDiscount() ?? 0;
-    const totalBeforePointDeduction = mockData.productPrice - discount + mockData.deliveryFee;
-    return totalBeforePointDeduction - pointUsed; 
+    const totalBeforePointDeduction = mockData.productPrice - pointUsed;
+    const discount = calculateDiscount(totalBeforePointDeduction) ?? 0;
+    return totalBeforePointDeduction - discount + mockData.deliveryFee;
   };
 
   return (
-    <div className="flex items-start gap-4 justify-center tracking-tighter text-sm">
+    <div className="flex gap-4 justify-center tracking-tighter text-sm mt-4">
       <div className="flex flex-col gap-4">
         <Card className="w-[600px] gap-3">
           <CardHeader>
@@ -152,7 +152,13 @@ export default function CardWithForm() {
             <div className="grid w-full items-center gap-4">
               <div className="flex flex-col space-y-1.5 gap-4">
                 <label htmlFor="Coupon">쿠폰</label>
-                <Select onValueChange={(value) => handleCouponSelect({ target: { value } } as React.ChangeEvent<HTMLSelectElement>)}>
+                <Select
+                  onValueChange={(value) =>
+                    handleCouponSelect({
+                      target: { value },
+                    } as React.ChangeEvent<HTMLSelectElement>)
+                  }
+                >
                   <SelectTrigger id="framework">
                     <SelectValue placeholder="쿠폰선택" />
                   </SelectTrigger>
@@ -172,7 +178,12 @@ export default function CardWithForm() {
                   placeholder="Coupon Number"
                 />
                 <label htmlFor="Point">포인트 사용</label>
-                <input type="text" id="Point" placeholder="포인트를 입력하세요" onChange={handlePointChange}/>
+                <input
+                  type="text"
+                  id="Point"
+                  placeholder="포인트를 입력하세요"
+                  onChange={handlePointChange}
+                />
               </div>
               <div className="flex flex-col space-y-1.5"></div>
             </div>
@@ -199,7 +210,7 @@ export default function CardWithForm() {
                   </div>
                   <div className="flex w-full justify-between">
                     <p>쿠폰 할인</p>
-                    <p>-{calculateDiscount()}원</p>
+                    <p>-{calculateDiscount(mockData.productPrice - pointUsed)}원</p>
                   </div>
                   <div className="flex w-full justify-between">
                     <p>포인트 사용</p>
