@@ -18,6 +18,5 @@ export default async function handler(req, res) {
     },
   }).then((res) => res.json());
 
-  // TODO: DB 처리
   res.redirect(`/success?orderId=${orderId}`);
 }

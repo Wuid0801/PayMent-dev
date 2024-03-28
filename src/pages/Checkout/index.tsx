@@ -2,11 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { loadPaymentWidget, ANONYMOUS } from "@tosspayments/payment-widget-sdk";
 import { nanoid } from "nanoid";
 
-// 구매자의 고유 아이디를 불러와서 customerKey로 설정하세요.
-// 이메일・전화번호와 같이 유추가 가능한 값은 안전하지 않습니다.
 const widgetClientKey = `${process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY}`;
 const customerKey = "2K4_8BsfT0OGhFKkgibnM";
-// const paymentWidget = PaymentWidget(widgetClientKey, PaymentWidget.ANONYMOUS) // 비회원 결제
 
 export default function CheckoutPage() {
   const [paymentWidget, setPaymentWidget] = useState<any>(null);
@@ -56,8 +53,6 @@ export default function CheckoutPage() {
   }, [price]);
 
   const handlePaymentRequest = async () => {
-    // 결제를 요청하기 전에 orderId, amount를 서버에 저장하세요.
-    // 결제 과정에서 악의적으로 결제 금액이 바뀌는 것을 확인하는 용도입니다.
     try {
       await paymentWidget?.requestPayment({
         orderId: nanoid(),
@@ -73,7 +68,6 @@ export default function CheckoutPage() {
 
   return (
     <div>
-      {/* 할인 쿠폰 */}
       <label htmlFor="coupon-box">
         <input
           id="coupon-box"
@@ -84,10 +78,8 @@ export default function CheckoutPage() {
         />
         <span>5,000원 쿠폰 적용</span>
       </label>
-      {/* 결제 UI, 이용약관 UI 영역 */}
       <div id="payment-widget" />
       <div id="agreement" />
-      {/* 결제하기 버튼 */}
       <button onClick={handlePaymentRequest}>결제하기</button>
     </div>
   );
