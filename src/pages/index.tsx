@@ -55,7 +55,7 @@ export default function CardWithForm() {
   // input handle
   const handlePointChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const enteredPoint = parseInt(e.target.value);
-    
+
     if (!Number.isNaN(enteredPoint)) {
       const totalPrice = calculateTotalPrice();
       if (enteredPoint >= 0) {
@@ -396,7 +396,11 @@ export default function CardWithForm() {
             </form>
           </CardContent>
           <CardFooter className="bg-blue-500 p-4 grid place-items-center">
-            <div className="text-white">결제하기</div>
+            {/* 결제 UI, 이용약관 UI 영역 */}
+            <div id="payment-widget" />
+            <div id="agreement" />
+            {/* 결제하기 버튼 */}
+            <button className="text-white">결제하기</button>
           </CardFooter>
         </Card>
       </div>
