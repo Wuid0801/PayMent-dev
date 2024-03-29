@@ -35,7 +35,7 @@ const mockData = {
   ],
   productPrice: 1000000,
   deliveryFee: 2500,
-  points: 0,
+  points: 100000,
 };
 
 export default mockData;
