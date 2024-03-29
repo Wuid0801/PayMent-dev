@@ -33,7 +33,7 @@ export default function SuccessPage() {
       // 결제 성공 비즈니스 로직을 구현하세요.
     }
     confirm();
-  }, [router.query]);
+  }, [router, router.query]);
 
   return (
     <div className="result wrapper">

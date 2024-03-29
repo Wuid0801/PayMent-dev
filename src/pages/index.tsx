@@ -92,7 +92,6 @@ export default function CardWithForm() {
       if (points > 0) {
         if (points >= totalPrice) {
           alert("최종 결제 금액을 초과하여 입력하셨습니다!");
-
           setPointUsed(totalPrice);
         } else {
           setPointUsed(points);
